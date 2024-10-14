@@ -1,0 +1,29 @@
+
+.container {
+    margin-top: 50px;
+  }
+  
+  .light-bulb {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+    transition: background-color 0.5s;
+  }
+  
+  .fan {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 5px solid gray;
+    border-top: 5px solid black;
+    margin: 0 auto;
+    animation: spin infinite linear;
+    transition: animation-duration 0.5s;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
