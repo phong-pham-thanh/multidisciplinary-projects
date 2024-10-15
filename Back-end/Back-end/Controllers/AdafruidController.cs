@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Back_end.Controllers
 {
+
+    public class ColorRequest
+    {
+        public string Color { get; set; }
+    }
+
     [ApiController]
     [Route("[controller]")]
     public class AdafruidController : ControllerBase
@@ -27,13 +33,10 @@ namespace Back_end.Controllers
         {
             try
             {
-                // Kết nối tới MQTT server
                 await _adafruidService.ConnectToMqttServer();
 
-                // Bắt đầu lắng nghe và gửi dữ liệu về client qua SignalR
                 await _adafruidService.StartListening(async (string message) =>
                 {
-                    // Khi nhận được message từ Adafruit, gửi message đó tới tất cả client
                     await _hubContext.Clients.All.SendAsync("ReceiveTemperature", message);
                 });
 
@@ -57,18 +60,34 @@ namespace Back_end.Controllers
 
 
 
+        //[HttpPost]
+        //[Route("send-data")]
+        //public async Task<IActionResult> SendData([FromBody] string data)
+        //{
+        //    if (!_adafruidService.IsClientConnected())
+        //    {
+        //        await _adafruidService.ConnectToMqttServer();
+        //    }
+        //    string feedName = "ptpphamphong/feeds/feed-color-picker";
+        //    await _adafruidService.SendRandomDataToServer(data, feedName);
+
+        //    return Ok($"Đã gửi dữ liệu: {data}");
+        //}
+
         [HttpPost]
-        [Route("send-data")]
-        public async Task<IActionResult> SendData([FromBody] int number)
+        [Route("change-light-color")]
+        public async Task<IActionResult> ChangeLightColor([FromBody] ColorRequest colorRequest)
         {
             if (!_adafruidService.IsClientConnected())
             {
                 await _adafruidService.ConnectToMqttServer();
             }
+            string feedName = "ptpphamphong/feeds/feed-color-picker";
 
-            await _adafruidService.SendRandomDataToServer(number);
+            // Gửi màu sắc nhận được tới server
+            await _adafruidService.SendRandomDataToServer(colorRequest.Color, feedName);
 
-            return Ok($"Đã gửi dữ liệu: {number}");
+            return Ok(new { message = $"Done Change to: {colorRequest.Color}" });
         }
 
         [HttpGet]
@@ -80,6 +99,26 @@ namespace Back_end.Controllers
 
             return Ok("Đã ngắt kết nối khỏi MQTT server.");
         }
+
+        //[HttpGet("get-feed-data")]
+        //public async Task<IActionResult> GetFeedData()
+        //{
+        //    try
+        //    {
+        //        // Kết nối tới Adafruit MQTT
+        //        await _adafruidService.ConnectToMqttServer();
+
+        //        // Lấy dữ liệu từ feed
+        //        var feedData = await _adafruidService.GetDataFromFeed("123");
+
+        //        // Trả về dữ liệu nhận được từ feed
+        //        return Ok(new { feedData });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { error = ex.Message });
+        //    }
+        //}
 
 
     }

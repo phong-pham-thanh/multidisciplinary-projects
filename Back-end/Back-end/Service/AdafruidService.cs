@@ -13,9 +13,11 @@ namespace Back_end.Service
         public Task ConnectToMqttServer();
         public Task StartListening(Func<string, Task> onMessageReceived);
         public Task StopListening();
-        public Task SendRandomDataToServer(int number);
+        public Task SendRandomDataToServer(string data, string feedName);
+        public Task ChangeLightColor(string data, string feedName);
         public bool IsClientConnected();
         public Task DisconnectFromMqttServer();
+        //public Task<string> GetDataFromFeed(string feedName);
     }
 
     public class AdafruidService : IAdafruidService
@@ -34,6 +36,7 @@ namespace Back_end.Service
             _options = new MqttClientOptionsBuilder()
                 .WithClientId(Guid.NewGuid().ToString())
                 .WithTcpServer("io.adafruit.com", 1883)
+                .WithCredentials("ptpphamphong", "123123123")
                 .WithCleanSession()
                 .Build();
         }
@@ -77,15 +80,26 @@ namespace Back_end.Service
         }
 
 
-        public async Task SendRandomDataToServer(int number)
+        public async Task SendRandomDataToServer(string data, string feedName)
         {
             var message = new MqttApplicationMessageBuilder()
-                .WithTopic("ptpphamphong/feeds/feed-send-data")
-                .WithPayload(number.ToString())
+                .WithTopic(feedName)
+                .WithPayload(data)
                 .Build();
 
             await _client.PublishAsync(message);
         }
+
+        public async Task ChangeLightColor(string data, string feedName)
+        {
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic(feedName)
+                .WithPayload(data)
+                .Build();
+
+            await _client.PublishAsync(message);
+        }
+
 
         public async Task DisconnectFromMqttServer()
         {
@@ -95,5 +109,29 @@ namespace Back_end.Service
                 Console.WriteLine("Đã ngắt kết nối.");
             }
         }
+
+
+        // Phương thức để lấy dữ liệu từ feed trên Adafruit
+        //public async Task<string> GetDataFromFeed(string feedName)
+        //{
+        //    feedName = "ptpphamphong/feeds/feed-slide-bar";
+        //    var tcs = new TaskCompletionSource<string>();
+
+        //    _client.ApplicationMessageReceivedAsync += e =>
+        //    {
+        //        string payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
+        //        Console.WriteLine($"Nhận dữ liệu từ feed: {payload}");
+
+        //        tcs.SetResult(payload);
+        //        return Task.CompletedTask;
+        //    };
+
+        //    await _client.SubscribeAsync(feedName);
+
+        //    string result = await tcs.Task;
+
+        //    return result;
+        //}
+
     }
 }
