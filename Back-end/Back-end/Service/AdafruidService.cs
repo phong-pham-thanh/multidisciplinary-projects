@@ -13,7 +13,7 @@ namespace Back_end.Service
         public Task ConnectToMqttServer();
         public Task StartListening(Func<string, Task> onMessageReceived);
         public Task StopListening();
-        public Task SendRandomDataToServer(string data, string feedName);
+        public Task SendDataToFeed(string data, string feedName);
         public Task ChangeLightColor(string data, string feedName);
         public bool IsClientConnected();
         public Task DisconnectFromMqttServer();
@@ -80,7 +80,7 @@ namespace Back_end.Service
         }
 
 
-        public async Task SendRandomDataToServer(string data, string feedName)
+        public async Task SendDataToFeed(string data, string feedName)
         {
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic(feedName)

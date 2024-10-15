@@ -83,11 +83,34 @@ namespace Back_end.Controllers
                 await _adafruidService.ConnectToMqttServer();
             }
             string feedName = "ptpphamphong/feeds/feed-color-picker";
-
-            // Gửi màu sắc nhận được tới server
-            await _adafruidService.SendRandomDataToServer(colorRequest.Color, feedName);
-
+            await _adafruidService.SendDataToFeed(colorRequest.Color, feedName);
             return Ok(new { message = $"Done Change to: {colorRequest.Color}" });
+        }
+
+        [HttpGet]
+        [Route("change-temperature-air-condition/{temperature}")]
+        public async Task<IActionResult> ChangeTemperatureAirCondition(int temperature)
+        {
+            if (!_adafruidService.IsClientConnected())
+            {
+                await _adafruidService.ConnectToMqttServer();
+            }
+            string feedName = "ptpphamphong/feeds/feed-air-condition";
+            await _adafruidService.SendDataToFeed(temperature.ToString(), feedName);
+            return Ok(new { message = $"Done temperature: {temperature}" });
+        }
+
+        [HttpGet]
+        [Route("change-fan-speed/{speed}")]
+        public async Task<IActionResult> ChangeFanSpeed(int speed)
+        {
+            if (!_adafruidService.IsClientConnected())
+            {
+                await _adafruidService.ConnectToMqttServer();
+            }
+            string feedName = "ptpphamphong/feeds/feed-fan-speed";
+            await _adafruidService.SendDataToFeed(speed.ToString(), feedName);
+            return Ok(new { message = $"Done temperature: {speed}" });
         }
 
         [HttpGet]

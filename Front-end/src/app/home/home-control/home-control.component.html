@@ -14,8 +14,15 @@
         <img src="https://via.placeholder.com/150?text=Air+Conditioner" alt="Air Conditioner" class="img-fluid mb-3">
         <div>
           <label for="temperature" class="form-label">Set Temperature</label>
-          <input id="temperature" type="number" class="form-control text-center" [(ngModel)]="acTemperature" min="16" max="30">
+
+
+          <!-- <input id="temperature" type="number" class="form-control text-center" [(ngModel)]="acTemperature" min="16" max="30"> -->
         </div>
+        
+          
+        <mat-slider min="16" max="30" step="1" showTickMarks discrete [displayWith]="formatLabel">
+          <input matSliderThumb  (change)="onSliderChange($event)">
+        </mat-slider>
         <div class="mt-3">
           <p class="lead">Current Room Temperature: <strong>{{ roomTemperature }} °C</strong></p>
         </div>

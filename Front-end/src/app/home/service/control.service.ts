@@ -17,6 +17,8 @@ export class ControlService {
 
   private apiUrlStartConnection = 'https://localhost:7108/Adafruid/open-listening-connection'; 
   private apiChangeLightColor = 'https://localhost:7108/Adafruid/change-light-color'
+  private apiChangeTemperatureAirCondition = 'https://localhost:7108/Adafruid/change-temperature-air-condition'
+  private apiChangeFanSpeed = 'https://localhost:7108/Adafruid/change-fan-speed'
 
   // private feedNameLight = 'ptpphamphong/feeds/feed-color-picker';
 
@@ -50,17 +52,14 @@ export class ControlService {
     return this.http.post(`${this.apiChangeLightColor}`, body, { headers });
   }
 
+  changeTemperatureAirCondition(temperature: number): Observable<any> {
+    return this.http.get(`${this.apiChangeTemperatureAirCondition}/${temperature}`);
+  }
 
-
-
-
-
-
-
-
-
-
-
+  
+  changeFanSpeed(speed: number): Observable<any> {
+    return this.http.get(`${this.apiChangeFanSpeed}/${speed}`);
+  }
 
 
 
