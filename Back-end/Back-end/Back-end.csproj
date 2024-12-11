@@ -16,7 +16,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+    <PackageReference Include="SerialPortStream" Version="2.4.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="System.IO.Ports" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

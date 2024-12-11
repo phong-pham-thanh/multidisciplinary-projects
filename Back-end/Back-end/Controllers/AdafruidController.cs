@@ -1,6 +1,5 @@
 ﻿using Back_end.Service;
 using Microsoft.AspNetCore.Mvc;
-using Back_end.Service;
 using Back_end.ExtensionHub;
 using Microsoft.AspNetCore.SignalR;
 
@@ -9,7 +8,7 @@ namespace Back_end.Controllers
 
     public class ColorRequest
     {
-        public string Color { get; set; }
+        public string? Color { get; set; }
     }
 
     [ApiController]
@@ -121,6 +120,24 @@ namespace Back_end.Controllers
             await _adafruidService.DisconnectFromMqttServer();
 
             return Ok("Đã ngắt kết nối khỏi MQTT server.");
+        }
+
+
+        [HttpGet]
+        [Route("connect-serial")]
+        public void ConnectSerial()
+        {
+            _adafruidService.TestController();
+            return;
+        }
+
+
+        [HttpGet]
+        [Route("close-serial")]
+        public void CloseSerial()
+        {
+            _adafruidService.CloseSerial();
+            return;
         }
 
         //[HttpGet("get-feed-data")]
