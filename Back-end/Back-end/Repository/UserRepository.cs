@@ -7,7 +7,9 @@ namespace Back_end.Repository
     public interface IUserRepository
     {
         public UsersModel GetUserLogin(string username, string password);
-
+        public UsersModel GetUserById(int id);
+        public bool SetWarningTemperature(UsersModel saveObject);
+        
     }
     public class UserRepository : IUserRepository
     {
@@ -24,6 +26,20 @@ namespace Back_end.Repository
         {
             Users users = _coreContext.Users.Where(us => us.Username == username && us.Password == password).FirstOrDefault();
             return _userMapper.ToModel(users);
+        }
+
+        public UsersModel GetUserById(int id)
+        {
+            Users users = _coreContext.Users.Where(us => us.Id == id).FirstOrDefault();
+            return _userMapper.ToModel(users);
+        }
+        public bool SetWarningTemperature(UsersModel saveObject)
+        {
+            Users efObject = _coreContext.Users.Where(u => u.Id == saveObject.Id).FirstOrDefault();
+
+            _userMapper.ToDataModelOnlySetting(efObject, saveObject);
+            _coreContext.SaveChanges();
+            return true;
         }
     }
 }

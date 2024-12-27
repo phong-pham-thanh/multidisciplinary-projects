@@ -1,0 +1,15 @@
+<div class="temperature-alert">
+    <span class="label">Nhiệt độ để nhận cảnh báo:</span>
+    <input type="number" min="0" [(ngModel)]="temperature" class="input-box" />
+</div>
+
+<div *ngIf="temperature > 0" class="temperature-alert">
+    <span class="label">Thông báo khi quá nhiệt:</span>
+    <input type = "checkbox"  [(ngModel)]="warningWhenOverHeat" >
+</div>
+
+<div *ngIf="temperature > 0" class="temperature-alert">
+    <span class="label">Tự động bật quạt khi quá nhiệt:</span>
+    <input type="number" min="0" max="4" [(ngModel)]="autoRunFanWhenOverHeat" class="input-box" />
+</div>
+<button class="update-button" (click)="updateTemperature()">Cập nhật</button>

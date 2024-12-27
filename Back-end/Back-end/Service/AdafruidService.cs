@@ -6,6 +6,8 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using RJCP.IO.Ports;
+using Back_end.Repository;
+using Microsoft.Extensions.DependencyInjection;
 namespace Back_end.Service
 {
     public interface IAdafruidService
@@ -17,7 +19,7 @@ namespace Back_end.Service
         public Task ChangeLightColor(string data, string feedName);
         public bool IsClientConnected();
         public Task DisconnectFromMqttServer();
-        public void TestController();
+        public void StartListeningSerialCom6(Func<string, Task> onMessageReceived);
         public void CloseSerial();
         //public Task<string> GetDataFromFeed(string feedName);
     }
@@ -27,11 +29,20 @@ namespace Back_end.Service
         private IMqttClient _client;
         private MqttClientOptions _options;
         private readonly IHubContext<TemperatureHub> _hubContext;
-        private SerialPortStream _serialPort;
+        private ITemperatureRecordRepository _temperatureRepository;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ISerialPortManager _serialPortManagement;
 
-        public AdafruidService(IHubContext<TemperatureHub> hubContext)
+        public AdafruidService(IHubContext<TemperatureHub> hubContext,
+            ITemperatureRecordRepository temperatureRepository,
+            ISerialPortManager serialPortManagement,
+            IServiceProvider serviceProvider
+            )
         {
             _hubContext = hubContext;
+            _temperatureRepository = temperatureRepository;
+            _serviceProvider = serviceProvider;
+            _serialPortManagement = serialPortManagement;
 
 
             var factory = new MqttFactory();
@@ -42,7 +53,6 @@ namespace Back_end.Service
                 .WithCredentials("ptpphamphong", "123123123")
                 .WithCleanSession()
                 .Build();
-            _serialPort = new SerialPortStream();
         }
 
         public bool IsClientConnected()
@@ -63,7 +73,7 @@ namespace Back_end.Service
         {
             _client.ApplicationMessageReceivedAsync += async e =>
             {
-                string payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+                string payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
                 Console.WriteLine("Nhận dữ liệu từ Adafruit: " + payload);
 
                 // Gửi dữ liệu đến tất cả các client qua SignalR
@@ -119,26 +129,25 @@ namespace Back_end.Service
         {
             try
             {
-                if (_serialPort == null || !_serialPort.IsOpen)
+                if (_serialPortManagement.GetSerialPort() == null || !_serialPortManagement.GetSerialPort().IsOpen)
                 {
                     return;
                 }
 
-                _serialPort.Close();
+                _serialPortManagement.GetSerialPort().Close();
                 Console.WriteLine("Đã ngắt kết nối.");
 
                 return;
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 return;
             }
         }
 
 
-
-
-        public void TestController()
+        public void StartListeningSerialCom6(Func<string, Task> onMessageReceived)
         {
             string portName = GetPort();
 
@@ -147,15 +156,16 @@ namespace Back_end.Service
                 try
                 {
 
-                    if (_serialPort != null && _serialPort.IsOpen)
+                    if (_serialPortManagement.GetSerialPort() != null && _serialPortManagement.GetSerialPort().IsOpen)
                     {
                         return;
                     }
-                    _serialPort = new SerialPortStream(portName, 115200);
 
-                    _serialPort.DataReceived += new EventHandler<SerialDataReceivedEventArgs>(SerialPort_DataReceived);
+                    _serialPortManagement.SetSerialPort(new SerialPortStream(portName, 115200));
+                    _serialPortManagement.SetIrgnore(true);
+                    _serialPortManagement.GetSerialPort().DataReceived += new EventHandler<SerialDataReceivedEventArgs>(SerialPort_DataReceived);
 
-                    _serialPort.Open();
+                    _serialPortManagement.GetSerialPort().Open();
                     Console.WriteLine("Cổng nối tiếp đã được mở: " + portName);
                 }
                 catch (Exception ex)
@@ -171,8 +181,13 @@ namespace Back_end.Service
 
 
 
-        public void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        public async void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
+            if (_serialPortManagement.GetIrgnore())
+            {
+                _serialPortManagement.SetIrgnore(false);
+                return;
+            }
             SerialPortStream serialPort = (SerialPortStream)sender;
 
             // Đọc dữ liệu từ cổng nối tiếp
@@ -181,7 +196,17 @@ namespace Back_end.Service
 
             // Chuyển dữ liệu thành chuỗi và in ra console
             string receivedData = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
-            Console.WriteLine("Đã nhận dữ liệu: " + receivedData);
+
+
+            await _hubContext.Clients.All.SendAsync("ReceiveTemperature", receivedData);
+
+            //Gửi đến adafruid
+            string feedName = "ptpphamphong/feeds/feed-slide-bar";
+            await SendDataToFeed(receivedData, feedName);
+
+            //Lưu vào DB
+             _temperatureRepository.AddNewRecord(1, Int32.Parse(receivedData));
+            Console.WriteLine("hahahaha: " + receivedData);
         }
 
         public string GetPort()

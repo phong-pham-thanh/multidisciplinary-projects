@@ -47,8 +47,10 @@ builder.Services.AddDbContext<CoreContext>(options =>
 // Thêm dịch vụ cho SignalR và các dịch vụ khác
 builder.Services.AddScoped<IAdafruidService, AdafruidService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITemperatureRecordRepository, TemperatureRecordRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserMapper, UserMapper>();
+builder.Services.AddSingleton<ISerialPortManager, SerialPortManager>();
 
 // Thêm SignalR
 builder.Services.AddSignalR();

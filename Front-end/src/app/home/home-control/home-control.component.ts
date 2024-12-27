@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { Product } from '../model/Product';
 import { ControlService } from '../service/control.service';
 import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
 import { FormControl } from '@angular/forms';
-
+import { Users } from '../model/Users';
+import { AuthService } from '../service/auth.service';
+import _ from 'lodash';
 
 @Component({
   selector: 'app-home-control',
@@ -14,6 +15,7 @@ import { FormControl } from '@angular/forms';
 export class HomeControlComponent implements OnInit {
 
   constructor(private controlService: ControlService,
+    private authService: AuthService,
   ) {
    }
 
@@ -25,10 +27,12 @@ export class HomeControlComponent implements OnInit {
   acTemperature: number = 24;
 
   roomTemperature: number = 0;
+  showAlert: boolean = false;
 
   lightColors: string[] = ['#FF0000', '#008000', '#0000FF', '#FFFF00', '#800080', '#FFA500', '#00FFFF', '#000000'];
 
   currentColorIndex: number = 0;
+  currentUser: Users;
 
 
   speedSettings: number[] = [0, 2, 1.5, 1, 0.5]; 
@@ -43,6 +47,14 @@ export class HomeControlComponent implements OnInit {
 
 
   ngOnInit(): void {
+    var userCookies: Users | null = this.authService.getUserFromCookie();
+    if(userCookies){
+      this.authService.getCurrentUserInfo(userCookies.id).subscribe({
+        next: (result) => {
+          this.currentUser = _.cloneDeep(result);
+        }
+      })
+    }
   }
 
 
@@ -72,10 +84,15 @@ export class HomeControlComponent implements OnInit {
     this.changeFanSpeed()
   }
 
-  changeFanSpeed(){
+  changeFanSpeed(fanSpeed?: number){
+    if(!fanSpeed){
+      fanSpeed = this.currentSpeed;
+    }
+    else{
+      this.currentSpeed = fanSpeed as number;
+    }
     this.controlService.changeFanSpeed(this.currentSpeed).subscribe(
       response => {
-        // alert('Đã thay đổi tốc độ quạt: '+ this.currentSpeed );
       },
       error => {
         console.error('Lỗi khi thay đổi tốc độ quạt:', error);
@@ -90,6 +107,11 @@ export class HomeControlComponent implements OnInit {
     this.controlService.currentTemperature.subscribe(
       (temperature: number) => {
         this.roomTemperature = temperature;
+        this.showAlert = !this.isNullOrEmpty(this.currentUser?.temperatureWarning) && this.currentUser.temperatureWarning as number < this.roomTemperature;
+        if(this.showAlert && this.currentUser.autoRunFanWhenOverHeat && this.currentUser.autoRunFanWhenOverHeat as number > 0){
+          this.changeFanSpeed(this.currentUser.autoRunFanWhenOverHeat);
+        }
+
       },
       (error) => {
         console.error('Lỗi khi nhận dữ liệu từ temperatureSource:', error);
@@ -109,6 +131,10 @@ export class HomeControlComponent implements OnInit {
     )
   }
 
+  closeListening(){
+    this.controlService.stopListeningConnection().subscribe();
+  }
+
   onSliderChange(data: any){
     console.log(data.target.value)
     this.controlService.changeTemperatureAirCondition(data.target.value as number).subscribe(
@@ -119,5 +145,17 @@ export class HomeControlComponent implements OnInit {
         console.error('Lỗi khi thay đổi nhiệt độ máy lạnh:', error);
       }
     );
+  }
+
+
+  isNull(obj: any): boolean {
+    if ((obj === 0) || (obj === false) || (obj === "")) {
+        return false;
+    }
+    return (!obj || typeof obj === 'undefined' || obj === null);
+  }
+
+  isNullOrEmpty(obj: any): boolean {
+    return this.isNull(obj) || obj === '';
   }
 }

@@ -125,10 +125,32 @@ namespace Back_end.Controllers
 
         [HttpGet]
         [Route("connect-serial")]
-        public void ConnectSerial()
+        public async Task<IActionResult> ConnectSerial()
         {
-            _adafruidService.TestController();
-            return;
+            if (!_adafruidService.IsClientConnected())
+            {
+                await _adafruidService.ConnectToMqttServer();
+            }
+
+            try
+            {
+                //await _adafruidService.ConnectToMqttServer();
+                _adafruidService.StartListeningSerialCom6(async (string message) =>
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveTemperature", message);
+                });
+
+                return Ok(new { message = "MQTT connection established and listening started." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Error occurred: {ex.Message}" });
+            }
+
+
+
+            // _adafruidService.TestController();
+            // return;
         }
 
 

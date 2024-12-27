@@ -34,5 +34,37 @@ namespace Back_end.Controllers
             }
             return userResult;
         }
+
+        [Route("test/")]
+        [HttpGet]
+        public UsersModel Test()
+        {
+            var temp = HttpContext.Session.GetInt32("currentUserId");
+            return null;
+        }
+
+        [Route("getUserInfo/{id}")]
+        [HttpGet]
+        public UsersModel GetUserInfo(int id)
+        {
+            return _userService.GetUserById(id);
+        }
+
+        [Route("setSession/{userId}")]
+        [HttpGet]
+        public void SetSession(int userId)
+        {
+            HttpContext.Session.SetInt32("currentUserId", userId);
+            return;
+        }
+        [Route("setWarningTempurate")]
+        [HttpPost]
+        public bool SetWarningTempurate([FromBody] UsersModel saveObject)
+        {
+            int currentUserId = HttpContext.Session.GetInt32("currentUserId").Value;
+            saveObject.Id = currentUserId;
+
+            return _userService.SetWarningTemperature(saveObject);
+        }
     }
 }

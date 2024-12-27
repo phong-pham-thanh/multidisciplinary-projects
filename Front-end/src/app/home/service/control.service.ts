@@ -15,7 +15,8 @@ export class ControlService {
   private username = 'ptpphamphong'; 
   private baseUrl = `https://io.adafruit.com/api/v2/${this.username}/feeds`; 
 
-  private apiUrlStartConnection = 'https://localhost:7108/Adafruid/open-listening-connection'; 
+  private apiUrlStartConnection = 'https://localhost:7108/Adafruid/connect-serial'; 
+  private apiUrlStopConnection = 'https://localhost:7108/Adafruid/close-serial'; 
   private apiChangeLightColor = 'https://localhost:7108/Adafruid/change-light-color'
   private apiChangeTemperatureAirCondition = 'https://localhost:7108/Adafruid/change-temperature-air-condition'
   private apiChangeFanSpeed = 'https://localhost:7108/Adafruid/change-fan-speed'
@@ -33,6 +34,10 @@ export class ControlService {
 
   openListeningConnection(): Observable<any> {
     return this.http.get(`${this.apiUrlStartConnection}`);
+  }
+
+  stopListeningConnection(): Observable<any> {
+    return this.http.get(`${this.apiUrlStopConnection}`);
   }
 
   getFeedData(feedName: string): Observable<any> {
