@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ControlService } from '../service/control.service';
 import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
@@ -12,7 +12,7 @@ import _ from 'lodash';
   templateUrl: './home-control.component.html',
   styleUrls: ['./home-control.component.scss']
 })
-export class HomeControlComponent implements OnInit {
+export class HomeControlComponent implements OnInit, OnDestroy {
 
   constructor(private controlService: ControlService,
     private authService: AuthService,
@@ -47,11 +47,13 @@ export class HomeControlComponent implements OnInit {
 
 
   ngOnInit(): void {
+
     var userCookies: Users | null = this.authService.getUserFromCookie();
     if(userCookies){
       this.authService.getCurrentUserInfo(userCookies.id).subscribe({
         next: (result) => {
           this.currentUser = _.cloneDeep(result);
+          this.startListening();
         }
       })
     }
@@ -107,11 +109,7 @@ export class HomeControlComponent implements OnInit {
     this.controlService.currentTemperature.subscribe(
       (temperature: number) => {
         this.roomTemperature = temperature;
-        this.showAlert = !this.isNullOrEmpty(this.currentUser?.temperatureWarning) && this.currentUser.temperatureWarning as number < this.roomTemperature;
-        if(this.showAlert && this.currentUser.autoRunFanWhenOverHeat && this.currentUser.autoRunFanWhenOverHeat as number > 0){
-          this.changeFanSpeed(this.currentUser.autoRunFanWhenOverHeat);
-        }
-
+        this.alertAndRunFanIfNeed();
       },
       (error) => {
         console.error('Lỗi khi nhận dữ liệu từ temperatureSource:', error);
@@ -121,14 +119,22 @@ export class HomeControlComponent implements OnInit {
   }
   
   getDataTempurature(){
-    this.controlService.getFeedData("feed-slide-bar").subscribe(
+    this.controlService.getFeedData("temperature-enviroment").subscribe(
       data => {
         this.roomTemperature = data.value;
+        this.alertAndRunFanIfNeed();
       },
       error => {
         console.error('Lỗi khi lấy dữ liệu từ Adafruit:', error);
       }
     )
+  }
+
+  alertAndRunFanIfNeed(){
+    this.showAlert = !this.isNullOrEmpty(this.currentUser?.temperatureWarning) && this.currentUser.warningWhenOverHeat === true && this.currentUser.temperatureWarning as number < this.roomTemperature;
+    if(this.showAlert && this.currentUser.autoRunFanWhenOverHeat && this.currentUser.autoRunFanWhenOverHeat as number > 0){
+      this.changeFanSpeed(this.currentUser.autoRunFanWhenOverHeat);
+    }
   }
 
   closeListening(){
@@ -157,5 +163,16 @@ export class HomeControlComponent implements OnInit {
 
   isNullOrEmpty(obj: any): boolean {
     return this.isNull(obj) || obj === '';
+  }
+
+  ngOnDestroy(){
+    this.controlService.stopListeningConnection().subscribe();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: Event): void {
+    const url = this.controlService.apiUrlStopConnection;
+
+    navigator.sendBeacon(url);
   }
 }

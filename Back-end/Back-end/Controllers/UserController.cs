@@ -15,9 +15,11 @@ namespace Back_end.Controllers
     public class UserController : ControllerBase
     {
         private IUserService _userService;
-        public UserController(IUserService userService) 
+        private ISerialPortManager _serialPortManager;
+        public UserController(IUserService userService, ISerialPortManager serialPortManager) 
         {
             _userService = userService;
+            _serialPortManager = serialPortManager;
         }
 
         [Route("login/")]
@@ -30,6 +32,7 @@ namespace Back_end.Controllers
             UsersModel userResult = _userService.GetUserLogin(username, password);
             if (userResult != null)
             {
+                _serialPortManager.SetCurrentUserId(userResult.Id);
                 HttpContext.Session.SetInt32("currentUserId", userResult.Id);
             }
             return userResult;
@@ -47,6 +50,7 @@ namespace Back_end.Controllers
         [HttpGet]
         public UsersModel GetUserInfo(int id)
         {
+            _serialPortManager.SetCurrentUserId(id);
             return _userService.GetUserById(id);
         }
 
@@ -54,6 +58,7 @@ namespace Back_end.Controllers
         [HttpGet]
         public void SetSession(int userId)
         {
+            _serialPortManager.SetCurrentUserId(userId);
             HttpContext.Session.SetInt32("currentUserId", userId);
             return;
         }

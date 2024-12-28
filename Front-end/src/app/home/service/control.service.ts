@@ -16,7 +16,7 @@ export class ControlService {
   private baseUrl = `https://io.adafruit.com/api/v2/${this.username}/feeds`; 
 
   private apiUrlStartConnection = 'https://localhost:7108/Adafruid/connect-serial'; 
-  private apiUrlStopConnection = 'https://localhost:7108/Adafruid/close-serial'; 
+  public apiUrlStopConnection = 'https://localhost:7108/Adafruid/close-serial'; 
   private apiChangeLightColor = 'https://localhost:7108/Adafruid/change-light-color'
   private apiChangeTemperatureAirCondition = 'https://localhost:7108/Adafruid/change-temperature-air-condition'
   private apiChangeFanSpeed = 'https://localhost:7108/Adafruid/change-fan-speed'

@@ -9,12 +9,15 @@ public interface ISerialPortManager
     bool IsPortOpen();
     bool GetIrgnore();
     void SetIrgnore(bool value);
+    int GetCurrentUserId();
+    void SetCurrentUserId(int value);
 }
 
 public class SerialPortManager : ISerialPortManager
 {
     private SerialPortStream _serialPort;
     private bool _irgnore;
+    private int _currentUserId;
 
     public bool GetIrgnore()
     {
@@ -25,6 +28,14 @@ public class SerialPortManager : ISerialPortManager
         _irgnore = value;
     }
 
+    public int GetCurrentUserId()
+    {
+        return _currentUserId;
+    }
+    public void SetCurrentUserId(int value)
+    {
+        _currentUserId = value;
+    }
 
     public SerialPortStream GetSerialPort()
     {

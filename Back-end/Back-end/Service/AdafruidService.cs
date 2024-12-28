@@ -19,7 +19,7 @@ namespace Back_end.Service
         public Task ChangeLightColor(string data, string feedName);
         public bool IsClientConnected();
         public Task DisconnectFromMqttServer();
-        public void StartListeningSerialCom6(Func<string, Task> onMessageReceived);
+        public void StartListeningSerialCom8(Func<string, Task> onMessageReceived);
         public void CloseSerial();
         //public Task<string> GetDataFromFeed(string feedName);
     }
@@ -76,15 +76,13 @@ namespace Back_end.Service
                 string payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
                 Console.WriteLine("Nhận dữ liệu từ Adafruit: " + payload);
 
-                // Gửi dữ liệu đến tất cả các client qua SignalR
                 await _hubContext.Clients.All.SendAsync("ReceiveTemperature", payload);
 
-                // Callback để xử lý thêm logic nếu cần
                 await onMessageReceived(payload);
             };
 
-            await _client.SubscribeAsync("ptpphamphong/feeds/feed-slide-bar");
-            Console.WriteLine("Đã subscribe tới feed: feed-slide-bar");
+            await _client.SubscribeAsync("ptpphamphong/feeds/temperature-enviroment");
+            Console.WriteLine("Đã subscribe tới feed: temperature-enviroment");
         }
 
         public async Task StopListening()
@@ -147,7 +145,7 @@ namespace Back_end.Service
         }
 
 
-        public void StartListeningSerialCom6(Func<string, Task> onMessageReceived)
+        public void StartListeningSerialCom8(Func<string, Task> onMessageReceived)
         {
             string portName = GetPort();
 
@@ -166,6 +164,8 @@ namespace Back_end.Service
                     _serialPortManagement.GetSerialPort().DataReceived += new EventHandler<SerialDataReceivedEventArgs>(SerialPort_DataReceived);
 
                     _serialPortManagement.GetSerialPort().Open();
+                    _serialPortManagement.GetSerialPort().DiscardInBuffer();
+
                     Console.WriteLine("Cổng nối tiếp đã được mở: " + portName);
                 }
                 catch (Exception ex)
@@ -183,29 +183,24 @@ namespace Back_end.Service
 
         public async void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            if (_serialPortManagement.GetIrgnore())
-            {
-                _serialPortManagement.SetIrgnore(false);
-                return;
-            }
+            //if (_serialPortManagement.GetIrgnore())
+            //{
+            //    _serialPortManagement.SetIrgnore(false);
+            //    return;
+            //}
             SerialPortStream serialPort = (SerialPortStream)sender;
-
-            // Đọc dữ liệu từ cổng nối tiếp
             byte[] buffer = new byte[serialPort.BytesToRead];
             int bytesRead = serialPort.Read(buffer, 0, buffer.Length);
 
-            // Chuyển dữ liệu thành chuỗi và in ra console
             string receivedData = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
 
             await _hubContext.Clients.All.SendAsync("ReceiveTemperature", receivedData);
 
-            //Gửi đến adafruid
-            string feedName = "ptpphamphong/feeds/feed-slide-bar";
+            string feedName = "ptpphamphong/feeds/temperature-enviroment";
             await SendDataToFeed(receivedData, feedName);
 
-            //Lưu vào DB
-             _temperatureRepository.AddNewRecord(1, Int32.Parse(receivedData));
+             _temperatureRepository.AddNewRecord(_serialPortManagement.GetCurrentUserId(), Int32.Parse(receivedData));
             Console.WriteLine("hahahaha: " + receivedData);
         }
 
@@ -216,7 +211,7 @@ namespace Back_end.Service
 
             foreach (string port in ports)
             {
-                if (port.Contains("COM6"))
+                if (port.Contains("COM8"))
                 {
                     commPort = port;
                     break;
@@ -237,7 +232,7 @@ namespace Back_end.Service
         // Phương thức để lấy dữ liệu từ feed trên Adafruit
         //public async Task<string> GetDataFromFeed(string feedName)
         //{
-        //    feedName = "ptpphamphong/feeds/feed-slide-bar";
+        //    feedName = "ptpphamphong/feeds/temperature-enviroment";
         //    var tcs = new TaskCompletionSource<string>();
 
         //    _client.ApplicationMessageReceivedAsync += e =>

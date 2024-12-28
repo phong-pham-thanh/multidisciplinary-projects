@@ -94,7 +94,7 @@ namespace Back_end.Controllers
             {
                 await _adafruidService.ConnectToMqttServer();
             }
-            string feedName = "ptpphamphong/feeds/feed-air-condition";
+            string feedName = "ptpphamphong/feeds/air-conditioner";
             await _adafruidService.SendDataToFeed(temperature.ToString(), feedName);
             return Ok(new { message = $"Done temperature: {temperature}" });
         }
@@ -135,7 +135,7 @@ namespace Back_end.Controllers
             try
             {
                 //await _adafruidService.ConnectToMqttServer();
-                _adafruidService.StartListeningSerialCom6(async (string message) =>
+                _adafruidService.StartListeningSerialCom8(async (string message) =>
                 {
                     await _hubContext.Clients.All.SendAsync("ReceiveTemperature", message);
                 });
