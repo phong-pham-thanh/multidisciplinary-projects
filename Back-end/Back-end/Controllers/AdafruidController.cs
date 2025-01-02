@@ -82,7 +82,7 @@ namespace Back_end.Controllers
                 await _adafruidService.ConnectToMqttServer();
             }
             string feedName = "ptpphamphong/feeds/feed-color-picker";
-            await _adafruidService.SendDataToFeed(colorRequest.Color, feedName);
+            await _adafruidService.SendDataToFeed(colorRequest.Color, feedName, needSendBackToSerial: true);
             return Ok(new { message = $"Done Change to: {colorRequest.Color}" });
         }
 
@@ -95,7 +95,7 @@ namespace Back_end.Controllers
                 await _adafruidService.ConnectToMqttServer();
             }
             string feedName = "ptpphamphong/feeds/air-conditioner";
-            await _adafruidService.SendDataToFeed(temperature.ToString(), feedName);
+            await _adafruidService.SendDataToFeed(temperature.ToString(), feedName, needSendBackToSerial: true);
             return Ok(new { message = $"Done temperature: {temperature}" });
         }
 
@@ -108,7 +108,7 @@ namespace Back_end.Controllers
                 await _adafruidService.ConnectToMqttServer();
             }
             string feedName = "ptpphamphong/feeds/feed-fan-speed";
-            await _adafruidService.SendDataToFeed(speed.ToString(), feedName);
+            await _adafruidService.SendDataToFeed(speed.ToString(), feedName, needSendBackToSerial: true);
             return Ok(new { message = $"Done temperature: {speed}" });
         }
 

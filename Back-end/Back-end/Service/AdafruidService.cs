@@ -15,7 +15,7 @@ namespace Back_end.Service
         public Task ConnectToMqttServer();
         public Task StartListening(Func<string, Task> onMessageReceived);
         public Task StopListening();
-        public Task SendDataToFeed(string data, string feedName);
+        public Task SendDataToFeed(string data, string feedName, bool needSendBackToSerial = false);
         public Task ChangeLightColor(string data, string feedName);
         public bool IsClientConnected();
         public Task DisconnectFromMqttServer();
@@ -92,12 +92,16 @@ namespace Back_end.Service
         }
 
 
-        public async Task SendDataToFeed(string data, string feedName)
+        public async Task SendDataToFeed(string data, string feedName, bool needSendBackToSerial = false)
         {
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic(feedName)
                 .WithPayload(data)
                 .Build();
+            if(needSendBackToSerial)
+            {
+                this.SendDataToCOM7(data);
+            }
 
             await _client.PublishAsync(message);
         }
@@ -108,6 +112,7 @@ namespace Back_end.Service
                 .WithTopic(feedName)
                 .WithPayload(data)
                 .Build();
+
 
             await _client.PublishAsync(message);
         }
@@ -202,6 +207,26 @@ namespace Back_end.Service
 
              _temperatureRepository.AddNewRecord(_serialPortManagement.GetCurrentUserId(), Int32.Parse(receivedData));
             Console.WriteLine("hahahaha: " + receivedData);
+        }
+
+        public void SendDataToCOM7(string data)
+        {
+            string portName = "COM7";
+            int baudRate = 115200;
+
+                try
+                {
+                    _serialPortManagement.GetSerialPort().Write(data);
+                    Console.WriteLine($"Đã gửi dữ liệu: {data}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi khi gửi dữ liệu: " + ex.Message);
+                }
+                finally
+                {
+                }
+            //}
         }
 
         public string GetPort()
